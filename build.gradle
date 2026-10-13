@@ -1,0 +1,49 @@
+plugins {
+    id 'application'
+}
+
+group = 'studio.flame'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+application {
+    mainClass = 'studio.flame.Main'
+    applicationDefaultJvmArgs = ['-Xmx2g', '-Dfile.encoding=UTF-8']
+}
+
+tasks.named('processResources') {
+    from('configs') { into 'presets' }
+}
+
+tasks.named('run', JavaExec) {
+    standardInput = System.in
+    workingDir = projectDir
+}
+
+tasks.named('jar', Jar) {
+    manifest { attributes 'Main-Class': application.mainClass.get() }
+}
+
+tasks.register('verifyRenderer', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'studio.flame.RendererTests'
+    jvmArgs '-Xmx1g', '-Djava.awt.headless=true'
+}
+
+tasks.named('test') {
+
+    failOnNoDiscoveredTests = false
+    dependsOn 'verifyRenderer'
+}
+
+tasks.named('check') { dependsOn 'verifyRenderer' }
